@@ -258,6 +258,20 @@ async function main() {
   )
   ok('both team players credited', playerStats.length === 2 && Number(playerStats[0].rounds_played) === 1)
 
+  // ---- eras: delete a cohort, but never one that owns coupons -------------
+  const throwaway = (
+    await q(`select tipping.admin_save_era('${admin}', null, 'Throwaway', date '2020-01-01', date '2020-12-31', false, null) as id`)
+  )[0].id
+  await db.exec(`select tipping.admin_delete_era('${admin}', '${throwaway}')`)
+  const gone = await q(`select count(*)::int as n from tipping.team_eras where id = '${throwaway}'`)
+  ok('empty era can be deleted', gone[0].n === 0, String(gone[0].n))
+
+  await expectError(
+    'era with coupons cannot be deleted',
+    `select tipping.admin_delete_era('${admin}', '${team.era_id}')`,
+    'still has',
+  )
+
   // ---- sign validation ---------------------------------------------------
   await expectError(
     'duplicate signs rejected',

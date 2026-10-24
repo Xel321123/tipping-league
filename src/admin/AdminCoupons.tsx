@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { fetchLeagueContext, fetchRoundBundle, fetchRounds } from '../lib/api'
 import { deleteCoupon, saveCoupon } from '../lib/admin'
 import { SIGNS, tallySelections } from '../lib/scores'
@@ -55,20 +55,22 @@ export function AdminCoupons({ token }: { token: string }) {
     setMessage(null)
   }, [roundId])
 
-  // Load the existing coupon for the chosen owner (edit-in-place).
+  // Load a *saved* coupon when the owner changes. Deliberately keyed on the
+  // owner only: picking a team after entering signs must not wipe the draft, and
+  // a background refresh of the round must not either.
+  const bundleRef = useRef(bundle.data)
+  bundleRef.current = bundle.data
+
   useEffect(() => {
-    if (!bundle.data) return
-    const existing = bundle.data.coupons.find((card) =>
+    if (!teamId && !playerId) return
+    const existing = (bundleRef.current?.coupons ?? []).find((card) =>
       mode === 'team' ? card.coupon.team_id === teamId : card.coupon.player_id === playerId,
     )
-    if (!teamId && !playerId) {
-      setSelections({})
-      setNote('')
-      return
-    }
-    setSelections(existing ? { ...existing.selections } : {})
-    setNote(existing?.coupon.note ?? '')
-  }, [bundle.data, teamId, playerId, mode])
+    if (!existing) return
+    setSelections({ ...existing.selections })
+    setNote(existing.coupon.note ?? '')
+    setMessage(null)
+  }, [teamId, playerId, mode])
 
   function toggleSign(matchNumber: number, sign: Sign) {
     setSelections((current) => {

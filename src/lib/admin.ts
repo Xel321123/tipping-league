@@ -122,6 +122,11 @@ export function deleteTeam(token: string, id: string): Promise<void> {
   return rpc<void>('admin_delete_team', { p_token: token, p_id: id }, 'Could not delete the team')
 }
 
+export function deleteEra(token: string, id: string): Promise<void> {
+  invalidateLeagueContext()
+  return rpc<void>('admin_delete_era', { p_token: token, p_id: id }, 'Could not delete the era')
+}
+
 export interface RoundInput {
   id?: string | null
   title: string

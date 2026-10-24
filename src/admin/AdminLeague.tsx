@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchLeagueContext } from '../lib/api'
-import { deleteTeam, saveEra, savePlayer, saveTeam } from '../lib/admin'
+import { deleteEra, deleteTeam, saveEra, savePlayer, saveTeam } from '../lib/admin'
 import { formatDate } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import {
@@ -233,6 +233,24 @@ function ErasCard({
     }
   }
 
+  async function remove(era: TeamEra) {
+    const ok = window.confirm(
+      `Delete ${era.name} and all of its teams? Rounds and coupons are kept, so an era with coupons cannot be removed.`,
+    )
+    if (!ok) return
+    setBusy(true)
+    try {
+      await deleteEra(token, era.id)
+      if (editing?.id === era.id) setEditing(null)
+      onSaved()
+      onFlash({ tone: 'ok', text: `${era.name} deleted.` })
+    } catch (cause) {
+      onFlash({ tone: 'error', text: cause instanceof Error ? cause.message : 'Could not delete era' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <Card className="p-4">
       <SectionHeader
@@ -288,9 +306,14 @@ function ErasCard({
                 {formatDate(era.start_date)} → {era.end_date ? formatDate(era.end_date) : 'present'}
               </div>
             </div>
-            <Button size="sm" variant="ghost" onClick={() => setEditing(era)}>
-              Edit
-            </Button>
+            <div className="flex shrink-0 gap-1.5">
+              <Button size="sm" variant="ghost" onClick={() => setEditing(era)}>
+                Edit
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => void remove(era)} disabled={busy}>
+                Delete
+              </Button>
+            </div>
           </li>
         ))}
       </ul>
