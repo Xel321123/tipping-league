@@ -1,5 +1,6 @@
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { fetchRoundBundle, fetchRounds } from '../lib/api'
+import { fetchRoundBundle, fetchRounds, syncRoundFromApi } from '../lib/api'
 import { formatDateTime, formatRows, untilLabel } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import { useTick } from '../hooks/useAsync'
@@ -22,8 +23,25 @@ export function LiveBoardPage() {
     .filter((round) => round.status === 'upcoming')
     .sort((a, b) => a.round_date.localeCompare(b.round_date))
 
+  // When nothing is live, fall back to the most recent round(s) — usually the
+  // two halves of the same matchday — and label them as not live.
+  const newest = [...allRounds].sort((a, b) => b.round_date.localeCompare(a.round_date))[0] ?? null
+  const recentRounds = newest
+    ? allRounds
+        .filter(
+          (round) =>
+            round.draw_number !== null &&
+            round.draw_number === newest.draw_number &&
+            round.status !== 'upcoming',
+        )
+        .sort((a, b) => b.round_date.localeCompare(a.round_date))
+        .slice(0, 3)
+    : []
+  const group = liveRounds.length > 0 ? liveRounds : recentRounds
+  const isLive = liveRounds.length > 0
+
   const requestedId = params.get('r')
-  const fallback = liveRounds[0] ?? upcoming[0] ?? allRounds[0] ?? null
+  const fallback = group[0] ?? upcoming[0] ?? allRounds[0] ?? null
   const spot = allRounds.find((round) => round.id === requestedId) ?? fallback
   const roundId = spot?.id ?? null
 
@@ -38,6 +56,37 @@ export function LiveBoardPage() {
     [roundId],
     { pollMs: 30_000 },
   )
+
+  const [syncing, setSyncing] = useState(false)
+
+  const refreshNow = useCallback(async () => {
+    if (!roundId) return
+    setSyncing(true)
+    try {
+      await syncRoundFromApi(roundId)
+      rounds.refresh()
+      bundle.refresh()
+    } finally {
+      window.setTimeout(() => setSyncing(false), 400)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roundId])
+
+  // Keep the board honest without an admin tab open: pull the draw, then re-read.
+  useEffect(() => {
+    if (!roundId) return
+    let cancelled = false
+    void refreshNow()
+    const timer = window.setInterval(() => {
+      if (!document.hidden) void refreshNow()
+    }, 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+      void cancelled
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roundId])
 
   if (rounds.error) {
     return (
@@ -92,19 +141,21 @@ export function LiveBoardPage() {
 
   return (
     <div className="space-y-5">
-      {liveRounds.length > 1 ? (
-        <LiveRoundSwitcher rounds={liveRounds} activeId={round.id} onSelect={selectRound} />
+      {group.length > 1 ? (
+        <LiveRoundSwitcher
+          rounds={group}
+          activeId={round.id}
+          onSelect={selectRound}
+          live={isLive}
+        />
       ) : null}
 
       <RoundHeader
         round={round}
         matches={matches}
         updatedAt={bundle.updatedAt}
-        onRefresh={() => {
-          rounds.refresh()
-          bundle.refresh()
-        }}
-        refreshing={refreshing}
+        onRefresh={() => void refreshNow()}
+        refreshing={syncing || refreshing}
         actions={
           <Badge tone={round.status === 'live' ? 'amber' : 'neutral'}>
             {round.status === 'live' ? 'Updated every 30s' : formatDateTime(round.round_date)}
@@ -207,10 +258,12 @@ function LiveRoundSwitcher({
   rounds,
   activeId,
   onSelect,
+  live,
 }: {
   rounds: Round[]
   activeId: string
   onSelect: (id: string) => void
+  live: boolean
 }) {
   return (
     <div
@@ -219,7 +272,7 @@ function LiveRoundSwitcher({
       aria-label="Live rounds"
     >
       <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-2">
-        {rounds.length} live
+        {rounds.length} {live ? 'live now' : 'recent · not live'}
       </span>
       {rounds.map((round) => {
         const active = round.id === activeId
@@ -232,11 +285,18 @@ function LiveRoundSwitcher({
             className={cn(
               'flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs transition-colors',
               active
-                ? 'bg-amber/15 text-amber ring-1 ring-inset ring-amber/30'
+                ? live
+                  ? 'bg-amber/15 text-amber ring-1 ring-inset ring-amber/30'
+                  : 'bg-chalk/10 text-chalk ring-1 ring-inset ring-line'
                 : 'text-muted hover:bg-surface-3 hover:text-chalk',
             )}
           >
-            <span className={cn('h-1.5 w-1.5 rounded-full', active ? 'bg-amber' : 'bg-muted-2/60')} />
+            <span
+              className={cn(
+                'h-1.5 w-1.5 rounded-full',
+                live ? (active ? 'bg-amber' : 'bg-amber/40') : 'bg-muted-2/50',
+              )}
+            />
             <span className="max-w-[12rem] truncate font-medium">{round.title}</span>
             <span className="text-[10px] text-muted-2">{round.mode === 'team' ? 'team' : 'solo'}</span>
           </button>

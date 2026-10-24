@@ -387,6 +387,16 @@ async function main() {
   await expectError('anon cannot insert players', `insert into tipping.players (name) values ('Intruder')`, '42501')
   await expectError('anon cannot read admin_config', `select count(*) from tipping.admin_config`, '42501')
   await expectError('anon cannot read admin_sessions', `select count(*) from tipping.admin_sessions`, '42501')
+  const machinePriv = await q(`
+    select has_function_privilege('anon', 'tipping.sync_matches_from_api(uuid, jsonb)', 'execute') as anon_ok,
+           has_function_privilege('service_role', 'tipping.sync_matches_from_api(uuid, jsonb)', 'execute') as svc_ok
+  `)
+  ok(
+    'machine sync is service-role only',
+    machinePriv[0].anon_ok === false && machinePriv[0].svc_ok === true,
+    JSON.stringify(machinePriv[0]),
+  )
+
   await expectError('anon cannot call internal assert_admin', `select tipping.assert_admin('x')`, '42501')
   await expectError('anon cannot delete coupons', `delete from tipping.coupons`, '42501')
   await db.exec(`reset role`)

@@ -1,4 +1,5 @@
 import { db, toApiError } from './supabase'
+import { config } from './env'
 import type {
   Coupon,
   CouponCard,
@@ -83,6 +84,30 @@ export async function fetchRounds(limit = 60): Promise<Round[]> {
 }
 
 /** The round the live board should show: live first, then next up, then latest. */
+/**
+ * Ask the ss-sync Edge Function to pull this round from Svenska Spel.
+ * Best effort: a failure means the board shows the last stored data.
+ */
+export async function syncRoundFromApi(roundId: string): Promise<boolean> {
+  if (!config.isConfigured) return false
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 12_000)
+  try {
+    const response = await fetch(
+      `${config.url.replace(/\/+$/, '')}/functions/v1/ss-sync?round=${encodeURIComponent(roundId)}`,
+      {
+        headers: { apikey: config.anonKey, Authorization: `Bearer ${config.anonKey}` },
+        signal: controller.signal,
+      },
+    )
+    return response.ok
+  } catch {
+    return false
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export async function fetchRoundBundle(roundId: string): Promise<RoundBundle> {
   const client = db()
   const round = await row<Round>(
