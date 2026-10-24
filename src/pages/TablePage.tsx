@@ -128,8 +128,14 @@ export function TablePage() {
                     </td>
                     <td className="tnum px-2 py-3 text-right font-semibold text-lime">{row.wins}</td>
                     <td className="tnum whitespace-nowrap px-2 py-3 text-right">
-                      {row.total_hits}
-                      <span className="text-muted-2">/{row.total_resolved || row.total_matches}</span>
+                      {row.total_resolved === 0 ? (
+                        <span className="text-muted-2">—</span>
+                      ) : (
+                        <>
+                          {row.total_hits}
+                          <span className="text-muted-2">/{row.total_resolved}</span>
+                        </>
+                      )}
                     </td>
                     <td className="tnum hidden px-2 py-3 text-right text-muted sm:table-cell">
                       {row.perfect_rounds}
