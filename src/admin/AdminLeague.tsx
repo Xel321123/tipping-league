@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchLeagueContext } from '../lib/api'
-import { deleteEra, deleteTeam, saveEra, savePlayer, saveTeam } from '../lib/admin'
+import { deleteEra, deletePlayer, deleteTeam, saveEra, savePlayer, saveTeam } from '../lib/admin'
 import { formatDate } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import {
@@ -152,6 +152,23 @@ function PlayerRow({
     }
   }
 
+  async function remove() {
+    const ok = window.confirm(
+      `Delete ${player.name}? A player who is still in a team (or owns coupons) cannot be removed.`,
+    )
+    if (!ok) return
+    setBusy(true)
+    try {
+      await deletePlayer(token, player.id)
+      onSaved()
+      onFlash({ tone: 'ok', text: `${player.name} deleted.` })
+    } catch (cause) {
+      onFlash({ tone: 'error', text: cause instanceof Error ? cause.message : 'Could not delete' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <li className="flex flex-wrap items-center gap-2 rounded-xl border border-line-soft bg-surface-2/30 px-2.5 py-2">
       <TextInput
@@ -171,6 +188,9 @@ function PlayerRow({
       </label>
       <Button size="sm" variant={dirty ? 'primary' : 'ghost'} onClick={save} loading={busy} disabled={!dirty}>
         Save
+      </Button>
+      <Button size="sm" variant="danger" onClick={() => void remove()} disabled={busy}>
+        Delete
       </Button>
     </li>
   )

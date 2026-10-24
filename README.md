@@ -133,6 +133,11 @@ outage) the admin panel still lets you enter fixtures and 1/X/2 outcomes by hand
    Round status is derived: all outcomes → `completed`.
 5. Table, players and history update automatically.
 
+**Starting fresh.** Admin → League deletes eras, teams and players. Deleting an era
+cascades its teams; an era that still has coupons, or a player who is still in a team, is
+protected with an explanatory message — delete those rounds first. Renaming a player keeps
+their history.
+
 ### About `topptipset`
 
 Topptipset is the 8-match pool this league plays. Svenska Spel's API no longer serves the

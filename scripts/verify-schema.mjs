@@ -272,6 +272,20 @@ async function main() {
     'still has',
   )
 
+  // ---- players: deletable when unattached --------------------------------
+  const tempPlayer = (
+    await q(`select tipping.admin_save_player('${admin}', null, 'Temp Player', null, true) as id`)
+  )[0].id
+  await db.exec(`select tipping.admin_delete_player('${admin}', '${tempPlayer}')`)
+  const playerGone = await q(`select count(*)::int as n from tipping.players where id = '${tempPlayer}'`)
+  ok('unattached player can be deleted', playerGone[0].n === 0, String(playerGone[0].n))
+
+  await expectError(
+    'player still in a team cannot be deleted',
+    `select tipping.admin_delete_player('${admin}', '${team.player_1_id}')`,
+    'still in a team',
+  )
+
   // ---- sign validation ---------------------------------------------------
   await expectError(
     'duplicate signs rejected',
