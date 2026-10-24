@@ -319,6 +319,10 @@ function MatchResultRow({
   }
 
   function autoOutcome() {
+    if (match.match_status !== 'finished') {
+      setError('That match is not finished — auto only settles final scores. Pick 1/X/2 by hand if you must override.')
+      return
+    }
     const homeScore = Number(home)
     const awayScore = Number(away)
     if (home === '' || away === '' || Number.isNaN(homeScore) || Number.isNaN(awayScore)) {
@@ -396,7 +400,17 @@ function MatchResultRow({
               </button>
             )
           })}
-          <Button variant="ghost" size="sm" onClick={autoOutcome} disabled={busy} title="Set the outcome from the score">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={autoOutcome}
+            disabled={busy || match.match_status !== 'finished'}
+            title={
+              match.match_status === 'finished'
+                ? 'Set the outcome from the final score'
+                : 'Mark the match finished first — auto settles final scores only'
+            }
+          >
             auto
           </Button>
           <Button variant="ghost" size="sm" onClick={() => void save()} loading={busy}>
@@ -408,6 +422,12 @@ function MatchResultRow({
       {error ? <p className="mt-1.5 text-[11px] text-rose">{error}</p> : null}
       {match.cancelled ? (
         <p className="mt-1.5 text-[11px] text-muted-2">Void match — counts as neither hit nor miss.</p>
+      ) : null}
+      {!match.cancelled && match.outcome !== null && match.match_status === 'live' ? (
+        <p className="mt-1.5 text-[11px] text-amber">
+          Outcome set while the match is in play — coupons count it as final. Clear it unless you
+          really mean it.
+        </p>
       ) : null}
     </div>
   )

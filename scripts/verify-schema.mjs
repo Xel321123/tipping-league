@@ -260,6 +260,24 @@ async function main() {
   const statusDone = await q(`select status from tipping.rounds where id = '${roundId}'`)
   ok('round completes when all decided', statusDone[0].status === 'completed', statusDone[0].status)
 
+  // A fixture still in play outranks a premature outcome on it: the round must
+  // stay live (and keep its coupons scoring) instead of flipping to completed.
+  await db.exec(`
+    update tipping.round_matches
+       set match_status = 'live', outcome = '1', current_result = '1'
+     where round_id = '${roundId}' and match_number = 1
+  `)
+  const stillLive = await q(`select status from tipping.rounds where id = '${roundId}'`)
+  ok('live fixture keeps the round live', stillLive[0].status === 'live', stillLive[0].status)
+
+  await db.exec(`
+    update tipping.round_matches
+       set match_status = 'finished', current_result = '1'
+     where round_id = '${roundId}' and match_number = 1
+  `)
+  const backDone = await q(`select status from tipping.rounds where id = '${roundId}'`)
+  ok('round completes once the fixture ends', backDone[0].status === 'completed', backDone[0].status)
+
   const winners = await q(`select * from tipping.v_round_winners where round_id = '${roundId}'`)
   ok('winner recorded', winners.length >= 1 && Number(winners[0].hits) === 7, JSON.stringify(winners[0]))
 
