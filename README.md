@@ -28,8 +28,8 @@ results come from **Svenska Spel**; the league's own data lives in an isolated
 | Route | What it does |
 | --- | --- |
 | `/` | Live board — the spotlight round, match strip with live scores and community picks, every coupon colour-coded (green = banked, amber = in play, red = dead) |
-| `/table` | Team standings for the selected era: wins, hits, perfect coupons, rows, hit % |
-| `/players` | Individual stats across team coupons and meetup entries, with current team |
+| `/table` | Team standings for the selected era: wins, hits, perfect coupons, rows, **winnings**, hit % |
+| `/players` | Individual stats across team coupons and meetup entries, with an era filter and a **Most won** sort |
 | `/history` | Completed rounds by year, winners, and the team composition of each era |
 | `/history/:id` | One round in full: matches, results, coupon breakdown |
 | `/admin` | Passcode-gated console: rounds + draw sync, coupon entry, results/overrides, league structure |
@@ -132,11 +132,22 @@ outage) the admin panel still lets you enter fixtures and 1/X/2 outcomes by hand
    database). Override any match by hand — score, status, outcome — if the API lags.
    Round status is derived: all outcomes → `completed`.
 5. Table, players and history update automatically.
+6. **Record winnings.** After the round settles, open Admin → Results → *Coupon payouts* and
+   enter what each coupon actually returned. Team payouts count for both players.
 
 **Starting fresh.** Admin → League deletes eras, teams and players. Deleting an era
 cascades its teams; an era that still has coupons, or a player who is still in a team, is
 protected with an explanatory message — delete those rounds first. Renaming a player keeps
 their history.
+
+### Winnings: why they are entered, not fetched
+
+Svenska Spel's API exposes the draw, the fixtures, live scores, turnover (`currentNetSale`),
+row price (`rowPrice`) and rollover (`fund`) — but **not the payout**. There is no
+result/payout endpoint, and Topptipset pays a single variable prize group (8/8 rows, 70% of
+stakes) whose per-row amount is only published on the site. So the app stores one number
+per coupon (`coupons.winnings`), aggregates it per team, per player and per era, and shows
+it in the table, the player cards and the admin payout panel.
 
 ### About `topptipset`
 

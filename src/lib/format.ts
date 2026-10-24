@@ -62,6 +62,18 @@ export function formatRows(value: number | null | undefined): string {
   return value.toLocaleString('en-GB')
 }
 
+/** Swedish kronor, no decimals unless the amount actually has öre. */
+export function formatSek(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '—'
+  const hasOre = Math.round(value * 100) % 100 !== 0
+  return new Intl.NumberFormat('sv-SE', {
+    style: 'currency',
+    currency: 'SEK',
+    maximumFractionDigits: hasOre ? 2 : 0,
+    minimumFractionDigits: hasOre ? 2 : 0,
+  }).format(value)
+}
+
 export function relativeTime(value: string | null | undefined): string {
   if (!value) return 'never'
   const then = new Date(value).getTime()

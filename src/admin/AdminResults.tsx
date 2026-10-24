@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { fetchRoundBundle, fetchRounds } from '../lib/api'
-import { setMatchState, syncMatches } from '../lib/admin'
+import { setCouponWinnings, setMatchState, syncMatches } from '../lib/admin'
 import { loadDraw } from '../lib/svenskaSpel'
 import { signFromScore } from '../lib/scores'
-import { formatDateTime, relativeTime } from '../lib/format'
+import { formatDateTime, formatSek, relativeTime } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import { Badge, Button, Card, InlineNote, SectionHeader, Skeleton, cn } from '../components/ui'
 import { RoundSelect } from './shared'
-import type { MatchStatus, RoundMatch, Sign } from '../lib/types'
+import type { CouponCard, MatchStatus, RoundMatch, Sign } from '../lib/types'
 
 const STATUS_OPTIONS: Array<{ value: MatchStatus; label: string }> = [
   { value: 'not_started', label: 'Not started' },
@@ -160,7 +160,118 @@ export function AdminResults({ token }: { token: string }) {
           ))}
         </Card>
       ) : null}
+
+      {bundle.data && bundle.data.coupons.length > 0 ? (
+        <PayoutsCard
+          token={token}
+          coupons={bundle.data.coupons}
+          onSaved={() => {
+            bundle.refresh()
+            rounds.refresh()
+          }}
+        />
+      ) : null}
     </div>
+  )
+}
+
+function PayoutsCard({
+  token,
+  coupons,
+  onSaved,
+}: {
+  token: string
+  coupons: CouponCard[]
+  onSaved: () => void
+}) {
+  const [values, setValues] = useState<Record<string, string>>({})
+  const [busy, setBusy] = useState<string | null>(null)
+  const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+
+  const total = coupons.reduce((sum, card) => sum + (card.coupon.winnings ?? 0), 0)
+
+  async function save(card: CouponCard) {
+    const raw = (values[card.coupon.id] ?? String(card.coupon.winnings ?? '')).trim()
+    const parsed = Number(raw.replace(',', '.'))
+    if (!raw || Number.isNaN(parsed) || parsed < 0) {
+      setMessage({ tone: 'error', text: 'Enter a payout of 0 or more.' })
+      return
+    }
+    setBusy(card.coupon.id)
+    setMessage(null)
+    try {
+      await setCouponWinnings(token, card.coupon.id, parsed)
+      setValues((current) => {
+        const next = { ...current }
+        delete next[card.coupon.id]
+        return next
+      })
+      onSaved()
+      setMessage({ tone: 'ok', text: `Payout saved for ${card.owner}.` })
+    } catch (cause) {
+      setMessage({ tone: 'error', text: cause instanceof Error ? cause.message : 'Could not save' })
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <Card className="p-4">
+      <SectionHeader
+        eyebrow="Winnings"
+        title="Coupon payouts"
+        description="Svenska Spel's API publishes turnover but not payouts, so record what each coupon actually returned. Team payouts count for both players."
+        actions={<Badge tone={total > 0 ? 'lime' : 'neutral'}>{formatSek(total)} this round</Badge>}
+      />
+
+      <ul className="mt-4 space-y-1.5">
+        {coupons.map((card) => (
+          <li
+            key={card.coupon.id}
+            className="flex flex-wrap items-center gap-2 rounded-xl border border-line-soft bg-surface-2/30 px-3 py-2"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm text-chalk">{card.owner}</div>
+              <div className="text-[11px] text-muted-2">
+                {card.score ? `${card.score.hits}/${card.score.matches} correct` : 'no result yet'} ·{' '}
+                {formatSek(card.coupon.winnings ?? 0)} recorded
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <input
+                  className="field tnum w-28 py-1 pr-8 text-right"
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={values[card.coupon.id] ?? (card.coupon.winnings ? String(card.coupon.winnings) : '')}
+                  onChange={(event) =>
+                    setValues((current) => ({ ...current, [card.coupon.id]: event.target.value }))
+                  }
+                  aria-label={`Winnings for ${card.owner}`}
+                />
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-2">
+                  kr
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                loading={busy === card.coupon.id}
+                onClick={() => void save(card)}
+              >
+                Save
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {message ? (
+        <div className="mt-3">
+          <InlineNote tone={message.tone === 'ok' ? 'lime' : 'rose'}>{message.text}</InlineNote>
+        </div>
+      ) : null}
+    </Card>
   )
 }
 
@@ -284,7 +395,7 @@ function MatchResultRow({
           <Button variant="ghost" size="sm" onClick={autoOutcome} disabled={busy} title="Set the outcome from the score">
             auto
           </Button>
-          <Button variant={match.outcome === null ? 'primary' : 'ghost'} size="sm" onClick={() => void save()} loading={busy}>
+          <Button variant="ghost" size="sm" onClick={() => void save()} loading={busy}>
             Save
           </Button>
         </div>

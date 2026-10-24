@@ -6,6 +6,7 @@ import type {
   CouponSelection,
   PickDistribution,
   Player,
+  PlayerEraStats,
   PlayerStats,
   Round,
   RoundBundle,
@@ -190,6 +191,13 @@ export async function fetchPlayerStats(): Promise<PlayerStats[]> {
   return rows<PlayerStats>(
     db().from('v_player_stats').select('*').order('name'),
     'Could not load player stats',
+  )
+}
+
+export async function fetchPlayerEraStats(): Promise<PlayerEraStats[]> {
+  return rows<PlayerEraStats>(
+    db().from('v_player_era_stats').select('*'),
+    'Could not load per-era player stats',
   )
 }
 

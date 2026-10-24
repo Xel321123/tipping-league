@@ -132,6 +132,14 @@ export function deletePlayer(token: string, id: string): Promise<void> {
   return rpc<void>('admin_delete_player', { p_token: token, p_id: id }, 'Could not delete the player')
 }
 
+export function setCouponWinnings(token: string, couponId: string, winnings: number): Promise<void> {
+  return rpc<void>(
+    'admin_set_coupon_winnings',
+    { p_token: token, p_coupon_id: couponId, p_winnings: winnings },
+    'Could not save the payout',
+  )
+}
+
 export interface RoundInput {
   id?: string | null
   title: string

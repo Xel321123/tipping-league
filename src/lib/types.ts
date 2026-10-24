@@ -63,6 +63,7 @@ export interface Coupon {
   team_id: string | null
   player_id: string | null
   total_rows: number
+  winnings: number
   note: string | null
   created_at: string
   updated_at: string
@@ -111,6 +112,7 @@ export interface TeamStats {
   hit_pct: number | null
   avg_hits: number | null
   wins: number
+  total_winnings: number
 }
 
 export interface PlayerStats {
@@ -124,6 +126,21 @@ export interface PlayerStats {
   total_hits: number
   total_resolved: number
   perfect_rounds: number
+  hit_pct: number | null
+  wins: number
+  total_winnings: number
+}
+
+export interface PlayerEraStats {
+  player_id: string
+  player_name: string
+  era_id: string
+  era_name: string
+  rounds_played: number
+  total_hits: number
+  total_resolved: number
+  perfect_rounds: number
+  total_winnings: number
   hit_pct: number | null
   wins: number
 }

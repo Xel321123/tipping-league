@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchLeagueContext, fetchTeamStats } from '../lib/api'
-import { formatDate, formatPct, formatRows } from '../lib/format'
+import { formatDate, formatPct, formatRows, formatSek } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import { cn, Card, EmptyState, ErrorNote, SectionHeader, Skeleton } from '../components/ui'
 import type { TeamStats } from '../lib/types'
@@ -103,7 +103,8 @@ export function TablePage() {
                   <th className="label w-16 px-2 py-3 text-right font-semibold">Hits</th>
                   <th className="label hidden w-16 px-2 py-3 text-right font-semibold sm:table-cell">8/8</th>
                   <th className="label hidden w-20 px-2 py-3 text-right font-semibold sm:table-cell">Rows</th>
-                  <th className="label w-16 px-3 py-3 text-right font-semibold sm:px-4">Hit%</th>
+                  <th className="label hidden w-24 px-3 py-3 text-right font-semibold sm:table-cell">Won</th>
+                  <th className="label w-20 px-3 py-3 text-right font-semibold sm:px-3">Hit%</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-soft">
@@ -121,6 +122,9 @@ export function TablePage() {
                       <div className="truncate font-medium text-chalk">{row.team_name}</div>
                       <div className="truncate text-[11px] text-muted-2">
                         {row.player_1_name} &amp; {row.player_2_name}
+                      </div>
+                      <div className="tnum mt-0.5 text-[11px] font-medium text-lime sm:hidden">
+                        {formatSek(row.total_winnings)} won
                       </div>
                     </td>
                     <td className="tnum hidden px-2 py-3 text-right text-muted sm:table-cell">
@@ -143,7 +147,10 @@ export function TablePage() {
                     <td className="tnum hidden px-2 py-3 text-right text-muted sm:table-cell">
                       {formatRows(row.total_rows)}
                     </td>
-                    <td className="tnum whitespace-nowrap px-3 py-3 text-right font-medium text-chalk sm:px-4">
+                    <td className="tnum hidden px-3 py-3 text-right font-medium text-lime sm:table-cell">
+                      {formatSek(row.total_winnings)}
+                    </td>
+                    <td className="tnum whitespace-nowrap px-3 py-3 text-right font-medium text-chalk">
                       {formatPct(row.hit_pct)}
                     </td>
                   </tr>

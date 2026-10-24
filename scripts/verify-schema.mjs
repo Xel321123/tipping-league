@@ -258,6 +258,44 @@ async function main() {
   )
   ok('both team players credited', playerStats.length === 2 && Number(playerStats[0].rounds_played) === 1)
 
+  // ---- winnings ----------------------------------------------------------
+  await db.exec(`select tipping.admin_set_coupon_winnings('${admin}', '${couponId}', 1250.50)`)
+  const paidCoupon = (await q(`select * from tipping.v_coupon_scores where coupon_id = '${couponId}'`))[0]
+  ok('coupon payout recorded', Number(paidCoupon.winnings) === 1250.5, String(paidCoupon.winnings))
+
+  const paidTeam = (await q(`select * from tipping.v_team_stats where team_id = '${team.id}'`))[0]
+  ok('team winnings aggregate', Number(paidTeam.total_winnings) === 1250.5, String(paidTeam.total_winnings))
+
+  const paidPlayers = await q(
+    `select * from tipping.v_player_stats where player_id in ('${team.player_1_id}','${team.player_2_id}')`,
+  )
+  ok(
+    'both players credited the team payout',
+    paidPlayers.length === 2 && paidPlayers.every((row) => Number(row.total_winnings) === 1250.5),
+  )
+
+  const perEra = await q(
+    `select * from tipping.v_player_era_stats where player_id = '${team.player_1_id}'`,
+  )
+  ok(
+    'per-era player winnings',
+    perEra.length === 1 && Number(perEra[0].total_winnings) === 1250.5 && perEra[0].era_id === team.era_id,
+    JSON.stringify(perEra[0]),
+  )
+
+  ok(
+    'team round win credited to both players',
+    paidPlayers.every((row) => Number(row.wins) === 1),
+    JSON.stringify(paidPlayers.map((row) => row.wins)),
+  )
+  ok('per-era win count', perEra.length === 1 && Number(perEra[0].wins) === 1, JSON.stringify(perEra[0]))
+
+  await expectError(
+    'negative payout rejected',
+    `select tipping.admin_set_coupon_winnings('${admin}', '${couponId}', -5)`,
+    '22023',
+  )
+
   // ---- eras: delete a cohort, but never one that owns coupons -------------
   const throwaway = (
     await q(`select tipping.admin_save_era('${admin}', null, 'Throwaway', date '2020-01-01', date '2020-12-31', false, null) as id`)

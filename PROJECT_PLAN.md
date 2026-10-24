@@ -92,6 +92,12 @@ Normalisation (`src/lib/svenskaSpel.ts`):
 | `result[type=9]` (Current) | `current_result`, live scores |
 | `event.cancelled` | `cancelled` / `match_status = cancelled` |
 
+**Not available upstream: payouts.** The draw carries `currentNetSale`, `rowPrice` and
+`fund` (rollover), but no prize table — and `result/*` routes are gone. Topptipset has one
+variable prize group (8/8 rows, 70% of stakes). Winnings are therefore recorded per coupon
+by the admin (`coupons.winnings`) and aggregated in `v_team_stats`, `v_player_stats` and
+`v_player_era_stats`.
+
 CORS: the API returns no `Access-Control-Allow-Origin`. The client tries direct fetch,
 then the `ss-draw` Edge Function, then tells the admin to enter data manually. Manual
 outcomes are preserved by `admin_sync_matches` (`coalesce(excluded.outcome, existing)`),
