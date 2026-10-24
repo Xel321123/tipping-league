@@ -140,6 +140,25 @@ cascades its teams; an era that still has coupons, or a player who is still in a
 protected with an explanatory message — delete those rounds first. Renaming a player keeps
 their history.
 
+Adding a team: each player can hold **one team per era**, so the player pickers grey out
+anyone already paired in the selected era (shown as `— in Northlight`). To re-pair someone,
+edit that team or create a new era. The form reports problems right under the button, and
+the page-level notices appear as a fixed toast so they are visible wherever you are scrolled.
+
+### Install it as an app
+
+`public/manifest.webmanifest` declares `display: standalone`, a scoped `start_url`, maskable
+icons and app shortcuts; `public/sw.js` caches the shell so the board opens offline (the
+Supabase data still needs a connection). iOS needs the `apple-mobile-web-app-capable` meta
+tags, which are in `index.html` — that is what hides Safari's URL bar.
+
+- **Android/Chrome:** menu → *Add to Home screen* (or the install icon in the address bar).
+- **iOS Safari:** Share → *Add to Home Screen*, then open it from the icon.
+- **Desktop Chrome/Edge:** install icon in the address bar.
+
+Opened from the home-screen icon it runs full screen with no URL bar. The service worker is
+registered in production builds only, and it never caches Supabase or Svenska Spel requests.
+
 ### Winnings: why they are entered, not fetched
 
 Svenska Spel's API exposes the draw, the fixtures, live scores, turnover (`currentNetSale`),

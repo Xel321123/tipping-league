@@ -1,0 +1,61 @@
+{
+  "id": "./",
+  "name": "Tipping League",
+  "short_name": "Tipping",
+  "description": "Live board, coupon tracking, stats and history for the eight-player Topptipset league.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#080b11",
+  "theme_color": "#080b11",
+  "categories": [
+    "sports",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Live board",
+      "short_name": "Live",
+      "url": "./",
+      "description": "This weekend's coupons and live scores"
+    },
+    {
+      "name": "Table",
+      "short_name": "Table",
+      "url": "./table",
+      "description": "Team standings for the current era"
+    },
+    {
+      "name": "History",
+      "short_name": "History",
+      "url": "./history",
+      "description": "Past rounds, winners and past eras"
+    }
+  ]
+}

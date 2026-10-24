@@ -25,10 +25,12 @@ def chunk(tag: bytes, data: bytes) -> bytes:
     )
 
 
-def make_icon(size: int) -> bytes:
-    radius = size * 0.22
-    cell = size * 0.125
-    gap = size * 0.0625
+def make_icon(size: int, maskable: bool = False) -> bytes:
+    # Maskable icons are full-bleed and keep the mark inside the 80% safe zone.
+    radius = 0 if maskable else size * 0.22
+    scale = 0.62 if maskable else 1.0
+    cell = size * 0.125 * scale
+    gap = size * 0.0625 * scale
     origin = (size - (cell * 3 + gap * 2)) / 2
 
     filled = {(0, 0), (1, 1), (2, 1), (0, 2)}
@@ -40,7 +42,7 @@ def make_icon(size: int) -> bytes:
             # rounded-corner mask (outside the squircle -> transparent)
             dx = max(radius - x, 0, x - (size - radius))
             dy = max(radius - y, 0, y - (size - radius))
-            if dx * dx + dy * dy > radius * radius:
+            if radius and dx * dx + dy * dy > radius * radius:
                 scanlines += b"\x00\x00\x00\x00"
                 continue
 
@@ -64,13 +66,15 @@ def make_icon(size: int) -> bytes:
 
 def main() -> None:
     targets = [
-        (os.path.join("public", "apple-touch-icon.png"), 180),
-        (os.path.join("public", "icons", "icon-512.png"), 512),
+        (os.path.join("public", "apple-touch-icon.png"), 180, False),
+        (os.path.join("public", "icons", "icon-192.png"), 192, False),
+        (os.path.join("public", "icons", "icon-512.png"), 512, False),
+        (os.path.join("public", "icons", "maskable-512.png"), 512, True),
     ]
-    for path, size in targets:
+    for path, size, maskable in targets:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as handle:
-            handle.write(make_icon(size))
+            handle.write(make_icon(size, maskable))
         print(f"wrote {path} ({size}x{size}, {os.path.getsize(path)} bytes)")
 
 

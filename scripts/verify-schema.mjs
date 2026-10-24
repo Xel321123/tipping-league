@@ -109,7 +109,24 @@ async function main() {
     'player cannot be in two teams of the same era',
     `insert into tipping.teams (era_id, name, player_1_id, player_2_id)
      select era_id, 'Duplicate', player_1_id, player_2_id from tipping.teams limit 1`,
-    'already in a team',
+    'already in',
+  )
+
+  await db.exec(`
+    do $$
+    begin
+      insert into tipping.teams (era_id, name, player_1_id, player_2_id)
+      select era_id, 'Duplicate 2', player_1_id, player_2_id from tipping.teams limit 1;
+    exception when unique_violation then
+      perform set_config('qa.dup', sqlerrm, false);
+    end $$;
+  `)
+  const dupMessage = await q(`select current_setting('qa.dup', true) as message`)
+  ok(
+    'duplicate message names the player and team',
+    typeof dupMessage[0]?.message === 'string' &&
+      /is already in .+ for this era/.test(dupMessage[0].message),
+    dupMessage[0]?.message,
   )
 
   const activeEras = await q(`select count(*)::int as n from tipping.team_eras where is_active`)

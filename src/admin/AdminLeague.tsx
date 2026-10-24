@@ -28,9 +28,31 @@ export function AdminLeague({ token }: { token: string }) {
     context.refresh()
   }
 
+  // Feedback must be visible without scrolling back to the top of the page.
+  useEffect(() => {
+    if (!flash) return
+    const timer = window.setTimeout(() => setFlash(null), 7000)
+    return () => window.clearTimeout(timer)
+  }, [flash])
+
   return (
     <div className="space-y-4">
-      {flash ? <InlineNote tone={flash.tone === 'ok' ? 'lime' : 'rose'}>{flash.text}</InlineNote> : null}
+      {flash ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
+          <div
+            role="status"
+            aria-live="polite"
+            className={cn(
+              'pointer-events-auto max-w-md rounded-xl border px-4 py-2.5 text-sm shadow-lg backdrop-blur',
+              flash.tone === 'ok'
+                ? 'border-lime/40 bg-lime/10 text-lime'
+                : 'border-rose/40 bg-rose/10 text-rose',
+            )}
+          >
+            {flash.text}
+          </div>
+        </div>
+      ) : null}
       {context.error ? <InlineNote tone="rose">{context.error}</InlineNote> : null}
 
       <PlayersCard
@@ -46,7 +68,6 @@ export function AdminLeague({ token }: { token: string }) {
         eras={context.data?.eras ?? []}
         players={context.data?.players ?? []}
         onSaved={refresh}
-        onFlash={setFlash}
       />
     </div>
   )
@@ -348,14 +369,12 @@ function TeamsCard({
   eras,
   players,
   onSaved,
-  onFlash,
 }: {
   token: string
   teams: Team[]
   eras: TeamEra[]
   players: Player[]
   onSaved: () => void
-  onFlash: (flash: Flash) => void
 }) {
   const activeEra = eras.find((era) => era.is_active)?.id ?? eras[0]?.id ?? ''
   const [eraId, setEraId] = useState(activeEra)
@@ -364,6 +383,7 @@ function TeamsCard({
   const [player1, setPlayer1] = useState('')
   const [player2, setPlayer2] = useState('')
   const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState<Flash | null>(null)
 
   useEffect(() => {
     if (!eraId && activeEra) setEraId(activeEra)
@@ -378,13 +398,44 @@ function TeamsCard({
 
   const eraTeams = teams.filter((team) => team.era_id === eraId)
   const nameOf = (id: string) => players.find((player) => player.id === id)?.name ?? '?'
+  const eraName = eras.find((era) => era.id === eraId)?.name ?? 'this era'
+
+  // Players already paired in this era (the team being edited keeps its own slots).
+  const taken = new Map<string, string>()
+  for (const team of eraTeams) {
+    if (editing && team.id === editing.id) continue
+    taken.set(team.player_1_id, team.name)
+    taken.set(team.player_2_id, team.name)
+  }
+  const freePlayers = players.filter((player) => !taken.has(player.id))
 
   async function submit() {
-    if (!eraId || !name.trim() || !player1 || !player2) {
-      onFlash({ tone: 'error', text: 'Pick an era, a name and two players.' })
+    if (!eraId) {
+      setNotice({ tone: 'error', text: 'Pick an era for the team.' })
       return
     }
+    if (!name.trim()) {
+      setNotice({ tone: 'error', text: 'Give the team a name.' })
+      return
+    }
+    if (!player1 || !player2) {
+      setNotice({ tone: 'error', text: 'Pick two players for this team.' })
+      return
+    }
+    if (player1 === player2) {
+      setNotice({ tone: 'error', text: 'Pick two different players.' })
+      return
+    }
+    if (taken.has(player1) || taken.has(player2)) {
+      setNotice({
+        tone: 'error',
+        text: 'One of those players already has a team in this era — edit that team instead.',
+      })
+      return
+    }
+
     setBusy(true)
+    setNotice(null)
     try {
       await saveTeam(token, {
         id: editing?.id ?? null,
@@ -398,9 +449,12 @@ function TeamsCard({
       setPlayer1('')
       setPlayer2('')
       onSaved()
-      onFlash({ tone: 'ok', text: 'Team saved.' })
+      setNotice({ tone: 'ok', text: `${name.trim()} saved to ${eraName}.` })
     } catch (cause) {
-      onFlash({ tone: 'error', text: cause instanceof Error ? cause.message : 'Could not save team' })
+      setNotice({
+        tone: 'error',
+        text: cause instanceof Error ? cause.message : 'Could not save team',
+      })
     } finally {
       setBusy(false)
     }
@@ -408,12 +462,16 @@ function TeamsCard({
 
   async function remove(team: Team) {
     if (!window.confirm(`Delete ${team.name}?`)) return
+    setNotice(null)
     try {
       await deleteTeam(token, team.id)
       onSaved()
-      onFlash({ tone: 'ok', text: 'Team deleted.' })
+      setNotice({ tone: 'ok', text: `${team.name} deleted.` })
     } catch (cause) {
-      onFlash({ tone: 'error', text: cause instanceof Error ? cause.message : 'Could not delete team' })
+      setNotice({
+        tone: 'error',
+        text: cause instanceof Error ? cause.message : 'Could not delete team',
+      })
     }
   }
 
@@ -450,21 +508,29 @@ function TeamsCard({
         <Field label="Player 1">
           <select className="field" value={player1} onChange={(event) => setPlayer1(event.target.value)}>
             <option value="">Select…</option>
-            {players.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.name}
-              </option>
-            ))}
+            {players.map((player) => {
+              const team = taken.get(player.id)
+              return (
+                <option key={player.id} value={player.id} disabled={Boolean(team)}>
+                  {player.name}
+                  {team ? ` — in ${team}` : ''}
+                </option>
+              )
+            })}
           </select>
         </Field>
         <Field label="Player 2">
           <select className="field" value={player2} onChange={(event) => setPlayer2(event.target.value)}>
             <option value="">Select…</option>
-            {players.map((player) => (
-              <option key={player.id} value={player.id}>
-                {player.name}
-              </option>
-            ))}
+            {players.map((player) => {
+              const team = taken.get(player.id)
+              return (
+                <option key={player.id} value={player.id} disabled={Boolean(team)}>
+                  {player.name}
+                  {team ? ` — in ${team}` : ''}
+                </option>
+              )
+            })}
           </select>
         </Field>
       </div>
@@ -479,6 +545,17 @@ function TeamsCard({
           </Button>
         ) : null}
       </div>
+
+      <p className="mt-2 text-[11px] text-muted-2">
+        {freePlayers.length} of {players.length} players still free in {eraName}. Each player can
+        hold one team per era — to re-pair someone, edit their team or start a new era.
+      </p>
+
+      {notice ? (
+        <div className="mt-3">
+          <InlineNote tone={notice.tone === 'ok' ? 'lime' : 'rose'}>{notice.text}</InlineNote>
+        </div>
+      ) : null}
 
       <ul className="mt-4 space-y-1.5">
         {eraTeams.map((team) => (
