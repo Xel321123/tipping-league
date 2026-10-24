@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fetchRoundBundle, fetchRounds } from '../lib/api'
 import { setMatchState, syncMatches } from '../lib/admin'
 import { loadDraw } from '../lib/svenskaSpel'
@@ -20,6 +20,7 @@ export function AdminResults({ token }: { token: string }) {
   const rounds = useAsync(() => fetchRounds(50), [])
   const [roundId, setRoundId] = useState('')
   const [syncing, setSyncing] = useState(false)
+  const [autoSync, setAutoSync] = useState(true)
   const [message, setMessage] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
@@ -38,10 +39,10 @@ export function AdminResults({ token }: { token: string }) {
   const matches = bundle.data?.matches ?? []
   const settled = matches.filter((match) => match.outcome !== null).length
 
-  async function sync() {
-    if (!round) return
+  async function sync(options: { quiet?: boolean } = {}) {
+    if (!round || syncing) return
     setSyncing(true)
-    setMessage(null)
+    if (!options.quiet) setMessage(null)
     try {
       const payload = await loadDraw(
         round.svenska_spel_product,
@@ -51,16 +52,31 @@ export function AdminResults({ token }: { token: string }) {
       const count = await syncMatches(token, round.id, payload.normalized)
       bundle.refresh()
       rounds.refresh()
-      setMessage({
-        tone: 'ok',
-        text: `Updated ${count} matches from ${payload.draw.productName ?? round.svenska_spel_product}${payload.viaProxy ? ' via proxy' : ''}. Manual outcomes were kept.`,
-      })
+      if (!options.quiet) {
+        setMessage({
+          tone: 'ok',
+          text: `Updated ${count} matches from ${payload.draw.productName ?? round.svenska_spel_product}${payload.viaProxy ? ' via proxy' : ''}. Manual outcomes were kept.`,
+        })
+      }
     } catch (cause) {
       setMessage({ tone: 'error', text: cause instanceof Error ? cause.message : 'Sync failed' })
     } finally {
       setSyncing(false)
     }
   }
+
+  // Match days: keep pulling scores while this tab is open, so the live board
+  // never depends on somebody remembering to press the button.
+  const syncRef = useRef(sync)
+  syncRef.current = sync
+  useEffect(() => {
+    if (!autoSync || !round || round.status === 'completed') return
+    const timer = setInterval(() => {
+      if (document.hidden) return
+      void syncRef.current({ quiet: true })
+    }, 60_000)
+    return () => clearInterval(timer)
+  }, [autoSync, round?.id, round?.status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">
@@ -86,10 +102,20 @@ export function AdminResults({ token }: { token: string }) {
             onChange={setRoundId}
             hint={round ? formatDateTime(round.round_date) : undefined}
           />
-          <Button variant="ghost" onClick={sync} loading={syncing} disabled={!round}>
+          <Button variant="ghost" onClick={() => void sync()} loading={syncing} disabled={!round}>
             Sync from Svenska Spel
           </Button>
         </div>
+
+        <label className="mt-2 flex w-fit items-center gap-1.5 text-[11px] text-muted-2">
+          <input
+            type="checkbox"
+            checked={autoSync}
+            onChange={(event) => setAutoSync(event.target.checked)}
+            className="size-3.5 accent-lime"
+          />
+          auto-sync every 60s while this tab is open
+        </label>
 
         {message ? (
           <div className="mt-3">

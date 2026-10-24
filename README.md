@@ -127,8 +127,10 @@ outage) the admin panel still lets you enter fixtures and 1/X/2 outcomes by hand
    never overwrites an outcome you set manually.
 3. **Coupons.** Pick the round, pick team/player, tap `1` `X` `2` per match. One sign =
    single, two = half hedge, three = full hedge. Rows are derived by Postgres.
-4. **Results.** Sync during the round for live scores; override any match by hand (score,
-   status, outcome) if the API lags. Round status is derived: all outcomes → `completed`.
+4. **Results.** Sync during the round for live scores; leave the Results tab open and it
+   auto-syncs every 60 seconds (the live board then refreshes every 30 s from the
+   database). Override any match by hand — score, status, outcome — if the API lags.
+   Round status is derived: all outcomes → `completed`.
 5. Table, players and history update automatically.
 
 ### About `topptipset`
