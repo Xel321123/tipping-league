@@ -25,7 +25,11 @@ export function AdminResults({ token }: { token: string }) {
 
   useEffect(() => {
     if (roundId || !rounds.data?.length) return
-    const preferred = rounds.data.find((round) => round.status !== 'completed') ?? rounds.data[0]
+    // With more than one round running, start on a live one rather than an arbitrary row.
+    const preferred =
+      rounds.data.find((round) => round.status === 'live') ??
+      rounds.data.find((round) => round.status === 'upcoming') ??
+      rounds.data[0]
     if (preferred) setRoundId(preferred.id)
   }, [rounds.data, roundId])
 

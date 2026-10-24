@@ -25,6 +25,7 @@ export function RoundSelect({
         {rounds.map((round) => (
           <option key={round.id} value={round.id}>
             {round.title} — {formatDateTime(round.round_date)}
+            {round.status === 'live' ? ' · live' : round.status === 'completed' ? ' · final' : ''}
           </option>
         ))}
       </select>

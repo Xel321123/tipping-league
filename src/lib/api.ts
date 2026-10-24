@@ -83,18 +83,6 @@ export async function fetchRounds(limit = 60): Promise<Round[]> {
 }
 
 /** The round the live board should show: live first, then next up, then latest. */
-export async function fetchSpotlightRound(): Promise<Round | null> {
-  const rounds = await fetchRounds(40)
-  if (rounds.length === 0) return null
-  const live = rounds.find((round) => round.status === 'live')
-  if (live) return live
-  const upcoming = [...rounds]
-    .filter((round) => round.status === 'upcoming')
-    .sort((a, b) => a.round_date.localeCompare(b.round_date))
-  if (upcoming[0]) return upcoming[0]
-  return rounds[0] ?? null
-}
-
 export async function fetchRoundBundle(roundId: string): Promise<RoundBundle> {
   const client = db()
   const round = await row<Round>(

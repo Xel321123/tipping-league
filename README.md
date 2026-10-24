@@ -27,7 +27,7 @@ results come from **Svenska Spel**; the league's own data lives in an isolated
 
 | Route | What it does |
 | --- | --- |
-| `/` | Live board — the spotlight round, match strip with live scores and community picks, every coupon colour-coded (green = banked, amber = in play, red = dead) |
+| `/` | Live board — the current round, match strip with live scores and community picks, every coupon colour-coded (green = banked, amber = in play, red = dead). When more than one round is live (a team round plus a meetup, or two draws) a switcher appears and the choice is kept in the URL as `?r=<round id>` so it can be shared |
 | `/table` | Team standings for the selected era: wins, hits, perfect coupons, rows, **winnings**, hit % |
 | `/players` | Individual stats across team coupons and meetup entries, with an era filter and a **Most won** sort |
 | `/history` | Completed rounds by year, winners, and the team composition of each era |

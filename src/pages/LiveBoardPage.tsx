@@ -1,18 +1,37 @@
-import { Link } from 'react-router-dom'
-import { fetchRoundBundle, fetchSpotlightRound } from '../lib/api'
+import { Link, useSearchParams } from 'react-router-dom'
+import { fetchRoundBundle, fetchRounds } from '../lib/api'
 import { formatDateTime, formatRows, untilLabel } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import { useTick } from '../hooks/useAsync'
 import { CouponCardView } from '../components/CouponCard'
 import { MatchList } from '../components/MatchList'
 import { RoundHeader } from '../components/RoundHeader'
-import { Badge, Button, Card, EmptyState, ErrorNote, SectionHeader, Skeleton, Stat } from '../components/ui'
-import type { RoundBundle } from '../lib/types'
+import { Badge, Button, Card, EmptyState, ErrorNote, SectionHeader, Skeleton, Stat, cn } from '../components/ui'
+import type { Round, RoundBundle } from '../lib/types'
 
 export function LiveBoardPage() {
   useTick(30_000)
-  const spotlight = useAsync(() => fetchSpotlightRound(), [], { pollMs: 120_000 })
-  const roundId = spotlight.data?.id ?? null
+  const [params, setParams] = useSearchParams()
+
+  // Several rounds can run at once (a team coupon round and a meetup round, or
+  // two draws on the same weekend). Load the list and let ?r=<id> pick one.
+  const rounds = useAsync(() => fetchRounds(40), [], { pollMs: 60_000 })
+  const allRounds = rounds.data ?? []
+  const liveRounds = allRounds.filter((round) => round.status === 'live')
+  const upcoming = [...allRounds]
+    .filter((round) => round.status === 'upcoming')
+    .sort((a, b) => a.round_date.localeCompare(b.round_date))
+
+  const requestedId = params.get('r')
+  const fallback = liveRounds[0] ?? upcoming[0] ?? allRounds[0] ?? null
+  const spot = allRounds.find((round) => round.id === requestedId) ?? fallback
+  const roundId = spot?.id ?? null
+
+  const selectRound = (id: string) => {
+    const next = new URLSearchParams(params)
+    next.set('r', id)
+    setParams(next, { replace: true })
+  }
 
   const bundle = useAsync<RoundBundle | null>(
     () => (roundId ? fetchRoundBundle(roundId) : Promise.resolve(null)),
@@ -20,15 +39,15 @@ export function LiveBoardPage() {
     { pollMs: 30_000 },
   )
 
-  if (spotlight.error) {
+  if (rounds.error) {
     return (
       <div className="space-y-4">
-        <ErrorNote message={spotlight.error} onRetry={spotlight.refresh} />
+        <ErrorNote message={rounds.error} onRetry={rounds.refresh} />
       </div>
     )
   }
 
-  if (spotlight.loading && !bundle.data) {
+  if (rounds.loading && !rounds.data && !bundle.data) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-40 w-full" />
@@ -41,7 +60,7 @@ export function LiveBoardPage() {
     )
   }
 
-  if (!spotlight.data) {
+  if (!spot) {
     return (
       <div className="space-y-6">
         <PageIntro />
@@ -59,7 +78,7 @@ export function LiveBoardPage() {
   }
 
   const data = bundle.data
-  const round = data?.round ?? spotlight.data
+  const round = data?.round ?? spot
   const matches = data?.matches ?? []
   const coupons = data?.coupons ?? []
   const decided = matches.filter((match) => match.outcome !== null).length
@@ -69,16 +88,20 @@ export function LiveBoardPage() {
     .filter((value): value is string => typeof value === 'string' && new Date(value).getTime() > Date.now())
     .sort()[0]
 
-  const refreshing = bundle.loading || spotlight.loading
+  const refreshing = bundle.loading || rounds.loading
 
   return (
     <div className="space-y-5">
+      {liveRounds.length > 1 ? (
+        <LiveRoundSwitcher rounds={liveRounds} activeId={round.id} onSelect={selectRound} />
+      ) : null}
+
       <RoundHeader
         round={round}
         matches={matches}
         updatedAt={bundle.updatedAt}
         onRefresh={() => {
-          spotlight.refresh()
+          rounds.refresh()
           bundle.refresh()
         }}
         refreshing={refreshing}
@@ -176,6 +199,49 @@ export function LiveBoardPage() {
           </div>
         </Card>
       ) : null}
+    </div>
+  )
+}
+
+function LiveRoundSwitcher({
+  rounds,
+  activeId,
+  onSelect,
+}: {
+  rounds: Round[]
+  activeId: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div
+      className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-line-soft bg-surface-2/40 p-1.5"
+      role="group"
+      aria-label="Live rounds"
+    >
+      <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-2">
+        {rounds.length} live
+      </span>
+      {rounds.map((round) => {
+        const active = round.id === activeId
+        return (
+          <button
+            key={round.id}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onSelect(round.id)}
+            className={cn(
+              'flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs transition-colors',
+              active
+                ? 'bg-amber/15 text-amber ring-1 ring-inset ring-amber/30'
+                : 'text-muted hover:bg-surface-3 hover:text-chalk',
+            )}
+          >
+            <span className={cn('h-1.5 w-1.5 rounded-full', active ? 'bg-amber' : 'bg-muted-2/60')} />
+            <span className="max-w-[12rem] truncate font-medium">{round.title}</span>
+            <span className="text-[10px] text-muted-2">{round.mode === 'team' ? 'team' : 'solo'}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
