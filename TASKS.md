@@ -78,7 +78,7 @@ board every 30 s while visible.
 - [ ] Apply migrations to the shared instance, add `tipping` to exposed schemas
 - [ ] Seed players/eras/teams, rotate the admin passcode
 - [ ] Deploy `ss-draw`
-- [ ] Set Pages variables, enable Pages, verify the deployed URL
+- [x] Set Pages variables, enable Pages, verify the deployed URL
 - [ ] First real round: sync draw → enter coupons → watch it live
 
 ## Backlog

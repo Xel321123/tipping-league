@@ -7,6 +7,20 @@ results come from **Svenska Spel**; the league's own data lives in an isolated
 
 **Stack:** Vite · React 19 · TypeScript (strict) · Tailwind CSS v4 · Supabase (Postgres + Edge Functions) · GitHub Pages.
 
+**Live:** https://xel321123.github.io/tipping-league/
+
+> The screenshots below are rendered from sample data in the QA harness, not real results.
+> Players, teams and draws are seeded placeholders — rename them in Admin → League.
+
+| Live board | Team table |
+| --- | --- |
+| ![Live board](docs/screenshots/live-board.png) | ![Team table](docs/screenshots/team-table.png) |
+
+| Admin coupon entry | Mobile |
+| --- | --- |
+| ![Admin coupons](docs/screenshots/admin-coupons.png) | ![Mobile live board](docs/screenshots/live-mobile.png) |
+
+
 ---
 
 ## Screens
