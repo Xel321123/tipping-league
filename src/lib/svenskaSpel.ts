@@ -160,6 +160,14 @@ function proxyUrl(product: string, drawNumber?: number): string {
  *   3. surface a clear message so the admin can enter results by hand.
  */
 export async function loadDraw(product: string, drawNumber?: number): Promise<DrawPayload> {
+  // Topptipset exposes per-draw documents only; its collection endpoint was
+  // retired, so "latest draw" cannot be resolved and we ask for the number.
+  if (!drawNumber && product === 'topptipset') {
+    throw new Error(
+      'Topptipset has no "latest draw" endpoint — enter its draw number (from spela.svenskaspel.se/topptipset) and sync again.',
+    )
+  }
+
   const path = drawNumber
     ? `/draw/1/${encodeURIComponent(product)}/draws/${drawNumber}`
     : `/draw/1/${encodeURIComponent(product)}/draws`
@@ -197,9 +205,14 @@ export async function loadDraw(product: string, drawNumber?: number): Promise<Dr
   }
 }
 
-export const PRODUCT_OPTIONS: ReadonlyArray<{ value: string; label: string; matches: number }> = [
+export const PRODUCT_OPTIONS: ReadonlyArray<{
+  value: string
+  label: string
+  matches: number
+  needsDrawNumber?: boolean
+}> = [
+  { value: 'topptipset', label: 'Topptipset', matches: 8, needsDrawNumber: true },
   { value: 'europatipset', label: 'Europatipset', matches: 13 },
   { value: 'stryktipset', label: 'Stryktipset', matches: 13 },
-  { value: 'topptipset', label: 'Topptipset', matches: 8 },
   { value: 'maltipset', label: 'Måltipset', matches: 8 },
 ]

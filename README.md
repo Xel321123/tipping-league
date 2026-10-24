@@ -122,7 +122,7 @@ outage) the admin panel still lets you enter fixtures and 1/X/2 outcomes by hand
 ## Weekly runbook
 
 1. **Admin → Rounds → New round.** Title, date, mode (`team` or `individual`), product
-   (default `europatipset`), optional draw number (blank = latest), match count.
+   (default `topptipset`), draw number (Topptipset needs it — see below), match count.
 2. **Sync draw.** Fixtures, kickoffs and results are pulled and upserted. Re-syncing
    never overwrites an outcome you set manually.
 3. **Coupons.** Pick the round, pick team/player, tap `1` `X` `2` per match. One sign =
@@ -135,12 +135,13 @@ outage) the admin panel still lets you enter fixtures and 1/X/2 outcomes by hand
 
 ### About `topptipset`
 
-Topptipset is the classic 8-match pool, but its public route
-(`/draw/1/topptipset/draws`) currently returns *"No route found"* on Svenska Spel's API,
-while `europatipset`, `stryktipset` and `maltipset` respond normally. The schema still
-defaults to `topptipset` as specified, the product list includes it, and `match_count`
-is flexible (1–13) so a 13-match Europatipset round works without a code change. If
-Topptipset comes back, pick it from the product dropdown — nothing else changes.
+Topptipset is the 8-match pool this league plays. Svenska Spel's API no longer serves the
+**collection** endpoint (`GET /draw/1/topptipset/draws` → *"No route found"*), but the
+per-draw document works fine: `GET /draw/1/topptipset/draws/4405`. A Topptipset round
+therefore always carries its draw number — copy it from the coupon header on
+[spela.svenskaspel.se/topptipset](https://spela.svenskaspel.se/topptipset). The create form
+defaults to Topptipset / 8 matches; Europatipset and Stryktipset (13 matches) can still
+resolve "latest draw" on their own.
 
 ---
 

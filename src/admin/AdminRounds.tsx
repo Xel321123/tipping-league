@@ -23,7 +23,7 @@ function emptyDraft(): Draft {
     title: '',
     roundDate: toDateTimeInput(new Date().toISOString()),
     mode: 'team',
-    product: 'europatipset',
+    product: 'topptipset',
     drawNumber: '',
     matchCount: 8,
     notes: '',
@@ -228,7 +228,14 @@ export function AdminRounds({ token }: { token: string }) {
                 ))}
               </select>
             </Field>
-            <Field label="Draw number" hint="Blank = latest">
+            <Field
+              label="Draw number"
+              hint={
+                PRODUCT_OPTIONS.find((option) => option.value === draft.product)?.needsDrawNumber
+                  ? 'Required for Topptipset'
+                  : 'Blank = latest'
+              }
+            >
               <TextInput
                 inputMode="numeric"
                 value={draft.drawNumber}

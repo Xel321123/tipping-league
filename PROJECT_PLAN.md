@@ -74,11 +74,12 @@ Derived views: `v_coupon_selection_state` (per-match), `v_coupon_scores` (per co
 
 Endpoints used (`/draw/1/{product}/draws[/{drawNumber}]`):
 
-* `europatipset` (13 matches, Premier League + Europe) — verified working
+* `topptipset` (8) — **collection endpoint retired**, per-draw documents still work:
+  `GET /draw/1/topptipset/draws/4405` → 200, while `GET /draw/1/topptipset/draws`
+  returns *"No route found"*. A Topptipset round therefore stores its draw number.
+* `europatipset` (13, Premier League + Europe) — verified working
 * `stryktipset` (13) — verified working
 * `maltipset` — verified working, currently returns no draws
-* `topptipset` (8) — **route removed upstream**: returns
-  `No route found for 'GET /draw/1/topptipset/draws'`
 
 Normalisation (`src/lib/svenskaSpel.ts`):
 
