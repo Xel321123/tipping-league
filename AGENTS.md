@@ -30,8 +30,9 @@ npm run dev          # Vite, http://localhost:5173
 npm run typecheck    # tsc --noEmit — must pass before commit
 npm run build        # typecheck + production build
 python3 scripts/gen-icons.py
-supabase db push                                   # apply migrations
-supabase functions deploy ss-draw --no-verify-jwt  # CORS proxy
+./scripts/apply-migrations.sh --seed                 # shared instance: SQL via Management API
+supabase db push                                     # dedicated project only
+supabase functions deploy ss-draw --no-verify-jwt    # CORS proxy
 ```
 
 ## Code conventions

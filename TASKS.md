@@ -75,11 +75,11 @@ board every 30 s while visible.
 
 ## Phase 6 — Launch
 
-- [ ] Apply migrations to the shared instance, add `tipping` to exposed schemas
-- [ ] Seed players/eras/teams, rotate the admin passcode
-- [ ] Deploy `ss-draw`
+- [x] Apply migrations to the shared instance, add `tipping` to exposed schemas
+- [x] Seed players/eras/teams, rotate the admin passcode
+- [x] Deploy `ss-draw`
 - [x] Set Pages variables, enable Pages, verify the deployed URL
-- [ ] First real round: sync draw → enter coupons → watch it live
+- [x] First real round: sync draw → enter coupons → watch it live (Europatipset #2619 synced)
 
 ## Backlog
 

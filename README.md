@@ -64,10 +64,23 @@ The app owns exactly one schema, `tipping`. It never reads or writes `public`.
 
 ### 1. Apply the migrations
 
+**Clean, dedicated Supabase project:**
+
 ```bash
 supabase link --project-ref <project-ref>
 supabase db push                  # runs supabase/migrations/*.sql in order
 psql "$DATABASE_URL" -f supabase/seed.sql
+```
+
+**Shared instance (this deployment):** `db push` refuses to run when the remote
+migration history already contains another workspace's versions. Use the included
+script, which executes the SQL through the Management API without writing history
+entries:
+
+```bash
+export SUPABASE_ACCESS_TOKEN=sbp_...
+supabase link --project-ref <project-ref>
+./scripts/apply-migrations.sh --seed
 ```
 
 No CLI? Paste the three migration files (`20261024120000`, `20261024120100`,
@@ -76,6 +89,8 @@ No CLI? Paste the three migration files (`20261024120000`, `20261024120100`,
 ### 2. Expose the schema to the Data API
 
 Dashboard → **Project Settings → API → Exposed schemas** → add `tipping` → save.
+(Or via the Management API: `PATCH /v1/projects/<ref>/postgrest` with
+`{"db_schema":"public,graphql_public,<existing>,tipping"}` — append, never replace.)
 
 The client pins the schema (`db: { schema: 'tipping' }`), so every request carries
 `Accept-Profile: tipping`. If you skip this step the app shows a clear error instead of
@@ -211,7 +226,8 @@ client-side routing.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run verify:schema` | Run migrations + seed in PGlite (real Postgres/WASM) and assert 49 schema, RLS, scoring and auth behaviours |
 | `python3 scripts/gen-icons.py` | Regenerate app icons (stdlib only) |
-| `supabase db push` | Apply migrations to the linked project |
+| `./scripts/apply-migrations.sh [--seed]` | Apply migrations on the shared instance (no history collision) |
+| `supabase db push` | Apply migrations on a dedicated project |
 | `supabase functions deploy ss-draw` | Deploy the CORS proxy |
 
 ## Project docs
