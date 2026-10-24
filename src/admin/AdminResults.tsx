@@ -255,10 +255,10 @@ function MatchResultRow({
               </button>
             )
           })}
-          <Button variant="ghost" size="sm" onClick={autoOutcome} disabled={busy} title="Outcome from score">
-            FT
+          <Button variant="ghost" size="sm" onClick={autoOutcome} disabled={busy} title="Set the outcome from the score">
+            auto
           </Button>
-          <Button variant="primary" size="sm" onClick={() => void save()} loading={busy}>
+          <Button variant={match.outcome === null ? 'primary' : 'ghost'} size="sm" onClick={() => void save()} loading={busy}>
             Save
           </Button>
         </div>

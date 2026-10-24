@@ -28,7 +28,6 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto text-[11px] text-muted-2 sm:hidden">Tipping League</div>
         </div>
 
         <nav className="mx-auto flex w-full max-w-6xl gap-1 overflow-x-auto px-3 pb-2 sm:hidden">

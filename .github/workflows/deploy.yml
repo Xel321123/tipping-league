@@ -33,6 +33,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Verify schema, RLS and scoring (PGlite)
+        run: npm run verify:schema
+
       - name: Build
         run: npm run build
         env:

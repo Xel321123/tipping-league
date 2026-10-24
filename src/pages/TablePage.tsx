@@ -63,7 +63,7 @@ export function TablePage() {
                 )}
               >
                 {candidate.name}
-                {candidate.is_active ? <span className="ml-1.5 text-[9px] uppercase">live</span> : null}
+                {candidate.is_active ? <span className="ml-1.5 text-[9px] uppercase">active</span> : null}
               </button>
             ))}
           </div>
@@ -93,34 +93,41 @@ export function TablePage() {
       ) : (
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] border-collapse text-sm">
+            <table className="w-full table-fixed border-collapse text-sm">
               <thead>
                 <tr className="border-b border-line-soft text-left">
-                  <th className="label px-4 py-3 font-semibold">#</th>
+                  <th className="label w-9 px-3 py-3 font-semibold sm:px-4">#</th>
                   <th className="label px-2 py-3 font-semibold">Team</th>
-                  <th className="label px-2 py-3 text-right font-semibold">R</th>
-                  <th className="label px-2 py-3 text-right font-semibold">W</th>
-                  <th className="label px-2 py-3 text-right font-semibold">Hits</th>
-                  <th className="label hidden px-2 py-3 text-right font-semibold sm:table-cell">8/8</th>
-                  <th className="label hidden px-2 py-3 text-right font-semibold sm:table-cell">Rows</th>
-                  <th className="label px-4 py-3 text-right font-semibold">Hit%</th>
+                  <th className="label hidden w-12 px-2 py-3 text-right font-semibold sm:table-cell">R</th>
+                  <th className="label w-10 px-2 py-3 text-right font-semibold">W</th>
+                  <th className="label w-16 px-2 py-3 text-right font-semibold">Hits</th>
+                  <th className="label hidden w-16 px-2 py-3 text-right font-semibold sm:table-cell">8/8</th>
+                  <th className="label hidden w-20 px-2 py-3 text-right font-semibold sm:table-cell">Rows</th>
+                  <th className="label w-16 px-3 py-3 text-right font-semibold sm:px-4">Hit%</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line-soft">
                 {ranked.map((row, index) => (
                   <tr key={row.team_id} className="row-hover">
-                    <td className={cn('tnum px-4 py-3 text-sm font-semibold', MEDALS[index] ?? 'text-muted-2')}>
+                    <td
+                      className={cn(
+                        'tnum px-3 py-3 text-sm font-semibold sm:px-4',
+                        MEDALS[index] ?? 'text-muted-2',
+                      )}
+                    >
                       {index + 1}
                     </td>
                     <td className="px-2 py-3">
-                      <div className="font-medium text-chalk">{row.team_name}</div>
-                      <div className="text-[11px] text-muted-2">
+                      <div className="truncate font-medium text-chalk">{row.team_name}</div>
+                      <div className="truncate text-[11px] text-muted-2">
                         {row.player_1_name} &amp; {row.player_2_name}
                       </div>
                     </td>
-                    <td className="tnum px-2 py-3 text-right text-muted">{row.rounds_played}</td>
+                    <td className="tnum hidden px-2 py-3 text-right text-muted sm:table-cell">
+                      {row.rounds_played}
+                    </td>
                     <td className="tnum px-2 py-3 text-right font-semibold text-lime">{row.wins}</td>
-                    <td className="tnum px-2 py-3 text-right">
+                    <td className="tnum whitespace-nowrap px-2 py-3 text-right">
                       {row.total_hits}
                       <span className="text-muted-2">/{row.total_resolved || row.total_matches}</span>
                     </td>
@@ -130,7 +137,9 @@ export function TablePage() {
                     <td className="tnum hidden px-2 py-3 text-right text-muted sm:table-cell">
                       {formatRows(row.total_rows)}
                     </td>
-                    <td className="tnum px-4 py-3 text-right font-medium text-chalk">{formatPct(row.hit_pct)}</td>
+                    <td className="tnum whitespace-nowrap px-3 py-3 text-right font-medium text-chalk sm:px-4">
+                      {formatPct(row.hit_pct)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

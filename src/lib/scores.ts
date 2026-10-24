@@ -54,6 +54,11 @@ export function tallySelections(
     const signs = selections[match.match_number] ?? []
     if (match.cancelled) continue
     const effective = effectiveResult(match)
+    // An untouched match is undecided, not a miss.
+    if (signs.length === 0) {
+      if (effective) resolved += 1
+      continue
+    }
     if (!effective) {
       activeRows *= Math.max(signs.length, 1)
       continue

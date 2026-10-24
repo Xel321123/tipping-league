@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchLeagueContext, fetchRounds, fetchWinners } from '../lib/api'
-import { formatDate, plural } from '../lib/format'
+import { formatDate, formatDayMonth, plural } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import { Badge, Card, EmptyState, ErrorNote, SectionHeader, Skeleton, Stat, cn } from '../components/ui'
 import type { Round, RoundWinner } from '../lib/types'
@@ -141,9 +141,9 @@ export function HistoryPage() {
                         'panel panel-hover flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3',
                       )}
                     >
-                      <div className="w-16 shrink-0">
+                      <div className="w-14 shrink-0">
                         <div className="tnum text-sm font-semibold text-chalk">
-                          {formatDate(round.round_date)}
+                          {formatDayMonth(round.round_date)}
                         </div>
                         <div className="text-[10px] text-muted-2">{round.match_count} matches</div>
                       </div>

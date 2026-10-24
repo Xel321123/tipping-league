@@ -27,13 +27,17 @@ export function CouponCardView({
   const rowsAlive = card.score?.rows_alive ?? 0
   const perfect = card.score?.perfect ?? false
   const out = (card.score?.misses ?? 0) > 0
+  const settled = Boolean(card.score && card.score.decidable > 0 && card.score.resolved >= card.score.decidable)
 
-  const columns = numbers.length > 8 ? 'grid-cols-5 sm:grid-cols-7' : 'grid-cols-4 sm:grid-cols-8'
+  const columns =
+    numbers.length > 8
+      ? 'grid-cols-5 @min-[21rem]:grid-cols-7'
+      : 'grid-cols-4 @min-[21rem]:grid-cols-8'
 
   return (
     <article
       className={cn(
-        'panel relative overflow-hidden p-4 transition-colors',
+        '@container panel relative overflow-hidden p-4 transition-colors',
         onOpen && 'cursor-pointer hover:border-line/70 hover:bg-surface-2/60',
       )}
       onClick={onOpen}
@@ -44,7 +48,7 @@ export function CouponCardView({
         </span>
       ) : null}
 
-      <header className="flex items-start justify-between gap-3 pr-10">
+      <header className={cn('flex items-start justify-between gap-3', perfect ? 'pr-20' : 'pr-1')}>
         <div className="min-w-0">
           <h3 className="truncate text-[15px] font-semibold tracking-tight text-chalk">{card.owner}</h3>
           <p className="mt-0.5 truncate text-[11px] text-muted-2">{card.ownerDetail}</p>
@@ -88,6 +92,8 @@ export function CouponCardView({
           <span className="font-medium text-rose">Out</span>
         ) : perfect ? (
           <span className="font-medium text-lime">Perfect</span>
+        ) : settled ? (
+          <span className="text-muted">Final</span>
         ) : card.score && card.score.resolved > 0 ? (
           <span className="text-amber">In play</span>
         ) : (

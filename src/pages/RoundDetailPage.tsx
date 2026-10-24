@@ -72,7 +72,7 @@ export function RoundDetailPage() {
         </Card>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
         <Card className="overflow-hidden">
           <div className="px-4 py-3">
             <SectionHeader eyebrow="Draw" title="Matches" />
@@ -85,7 +85,7 @@ export function RoundDetailPage() {
         </Card>
 
         <div className="space-y-3">
-          <SectionHeader eyebrow="Coupons" title={`${coupons.length} submitted`} />
+          <SectionHeader eyebrow={`${coupons.length} submitted`} title="Coupons" />
           {coupons.length === 0 ? (
             <Card className="px-4 py-8 text-center text-sm text-muted">No coupons for this round.</Card>
           ) : (
