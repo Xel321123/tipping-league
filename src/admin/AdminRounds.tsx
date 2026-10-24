@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { fetchRounds } from '../lib/api'
 import { deleteRound, saveRound, syncMatches } from '../lib/admin'
-import { loadDraw, PRODUCT_OPTIONS } from '../lib/svenskaSpel'
+import { loadDraw, PRODUCT_OPTIONS, productSiteUrl } from '../lib/svenskaSpel'
 import { fromDateTimeInput, relativeTime, toDateTimeInput } from '../lib/format'
 import { useAsync } from '../hooks/useAsync'
 import { Badge, Button, Card, Field, InlineNote, SectionHeader, Skeleton, TextInput } from '../components/ui'
@@ -232,7 +232,7 @@ export function AdminRounds({ token }: { token: string }) {
               label="Draw number"
               hint={
                 PRODUCT_OPTIONS.find((option) => option.value === draft.product)?.needsDrawNumber
-                  ? 'Required for Topptipset'
+                  ? 'Each pool has its own numbering'
                   : 'Blank = latest'
               }
             >
@@ -253,6 +253,22 @@ export function AdminRounds({ token }: { token: string }) {
               />
             </Field>
           </div>
+
+          {(() => {
+            const url = productSiteUrl(draft.product, Number(draft.drawNumber))
+            if (!url) return null
+            return (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-block text-[11px] text-muted-2 underline decoration-line-soft underline-offset-2 transition-colors hover:text-chalk"
+              >
+                Check {PRODUCT_OPTIONS.find((o) => o.value === draft.product)?.label ?? draft.product} #
+                {draft.drawNumber} on svenskaspel.se ↗
+              </a>
+            )
+          })()}
 
           <Field label="Notes (optional)">
             <TextInput

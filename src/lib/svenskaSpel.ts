@@ -160,11 +160,13 @@ function proxyUrl(product: string, drawNumber?: number): string {
  *   3. surface a clear message so the admin can enter results by hand.
  */
 export async function loadDraw(product: string, drawNumber?: number): Promise<DrawPayload> {
-  // Topptipset exposes per-draw documents only; its collection endpoint was
-  // retired, so "latest draw" cannot be resolved and we ask for the number.
-  if (!drawNumber && product === 'topptipset') {
+  // Topptipset (all three pools) exposes per-draw documents only; the collection
+  // endpoint was retired, so "latest draw" cannot be resolved and we ask for the
+  // number. The draw number alone is ambiguous across pools — the product picks it.
+  const needsDrawNumber = PRODUCT_OPTIONS.find((option) => option.value === product)?.needsDrawNumber
+  if (!drawNumber && needsDrawNumber) {
     throw new Error(
-      'Topptipset has no "latest draw" endpoint — enter its draw number (from spela.svenskaspel.se/topptipset) and sync again.',
+      `${productLabel(product)} has no "latest draw" endpoint — enter its draw number (from spela.svenskaspel.se) and sync again.`,
     )
   }
 
@@ -205,14 +207,53 @@ export async function loadDraw(product: string, drawNumber?: number): Promise<Dr
   }
 }
 
-export const PRODUCT_OPTIONS: ReadonlyArray<{
+export interface ProductOption {
+  /** API path segment, e.g. `topptipsetstryk`. */
   value: string
   label: string
   matches: number
   needsDrawNumber?: boolean
-}> = [
-  { value: 'topptipset', label: 'Topptipset', matches: 8, needsDrawNumber: true },
+  /** Numeric id spela.se uses in `?product=`, when it differs from the API. */
+  siteProductId?: number
+}
+
+/**
+ * Topptipset is three separate pools that share one draw-number series:
+ *   product 25 = Topptipset, 24 = Topptipset Extra, 23 = Topptipset Stryk.
+ * The draw number alone is ambiguous — the product picks the pool.
+ */
+export const PRODUCT_OPTIONS: ReadonlyArray<ProductOption> = [
+  { value: 'topptipset', label: 'Topptipset', matches: 8, needsDrawNumber: true, siteProductId: 25 },
+  {
+    value: 'topptipsetstryk',
+    label: 'Topptipset Stryk',
+    matches: 8,
+    needsDrawNumber: true,
+    siteProductId: 23,
+  },
+  {
+    value: 'topptipsetextra',
+    label: 'Topptipset Extra',
+    matches: 8,
+    needsDrawNumber: true,
+    siteProductId: 24,
+  },
   { value: 'europatipset', label: 'Europatipset', matches: 13 },
   { value: 'stryktipset', label: 'Stryktipset', matches: 13 },
   { value: 'maltipset', label: 'Måltipset', matches: 8 },
 ]
+
+export function productLabel(value: string | null | undefined): string {
+  if (!value) return '—'
+  return PRODUCT_OPTIONS.find((option) => option.value === value)?.label ?? value
+}
+
+/** Link to the public result page, when the product id on spela.se is known. */
+export function productSiteUrl(
+  value: string | null | undefined,
+  drawNumber: number | null | undefined,
+): string | null {
+  const option = PRODUCT_OPTIONS.find((candidate) => candidate.value === value)
+  if (!option?.siteProductId || !drawNumber) return null
+  return `https://spela.svenskaspel.se/topptipset/resultat?draw=${drawNumber}&product=${option.siteProductId}`
+}

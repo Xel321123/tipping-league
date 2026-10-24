@@ -3,6 +3,7 @@ import { StatusBadge } from '../components/RoundHeader'
 import { Field, cn } from '../components/ui'
 import { formatDateTime } from '../lib/format'
 import type { Round, Team, TeamEra } from '../lib/types'
+import { productLabel } from '../lib/svenskaSpel'
 
 export function RoundSelect({
   rounds,
@@ -57,8 +58,8 @@ export function RoundRow({
         <div className="truncate text-sm font-medium text-chalk">{round.title}</div>
         <div className="mt-0.5 truncate text-[11px] text-muted-2">
           {formatDateTime(round.round_date)} · {round.mode === 'team' ? 'team' : 'individual'} ·{' '}
-          {round.match_count} matches
-          {round.draw_number ? ` · draw #${round.draw_number}` : ''}
+          {round.match_count} matches · {productLabel(round.svenska_spel_product)}
+          {round.draw_number ? ` #${round.draw_number}` : ''}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">

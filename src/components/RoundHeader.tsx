@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { formatDateTime, formatPct, relativeTime } from '../lib/format'
+import { productLabel, productSiteUrl } from '../lib/svenskaSpel'
 import type { Round, RoundMatch } from '../lib/types'
 import { Badge, Button, LiveDot, cn } from './ui'
 
@@ -34,6 +35,7 @@ export function RoundHeader({
     (match) => !match.cancelled && (match.outcome !== null || match.current_result !== null),
   ).length
   const progress = matches.length > 0 ? (100 * resolved) / matches.length : 0
+  const siteUrl = productSiteUrl(round.svenska_spel_product, round.draw_number)
 
   return (
     <section className="panel relative overflow-hidden">
@@ -47,9 +49,19 @@ export function RoundHeader({
             <StatusBadge status={round.status} />
             <Badge>{round.mode === 'team' ? 'Team coupon' : 'Meetup · solo'}</Badge>
             <Badge>
-              {round.svenska_spel_product}
+              {productLabel(round.svenska_spel_product)}
               {round.draw_number ? ` · #${round.draw_number}` : ''}
             </Badge>
+            {siteUrl ? (
+              <a
+                href={siteUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-[11px] text-muted-2 underline decoration-line-soft underline-offset-2 transition-colors hover:text-chalk"
+              >
+                on svenskaspel.se
+              </a>
+            ) : null}
             <Badge>{round.match_count} matches</Badge>
           </div>
 
