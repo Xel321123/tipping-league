@@ -1,0 +1,24 @@
+# Supabase CLI config for this project.
+# The app lives in the `tipping` schema on a SHARED instance — never `public`.
+
+project_id = "tipping-league"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public", "tipping"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[db.seed]
+enabled = false
+sql_paths = ["./seed.sql"]
+
+[functions.ss-draw]
+# Public, read-only proxy for the Svenska Spel draw API. No secrets inside, so
+# the gateway JWT check is disabled to keep anonymous reads simple.
+verify_jwt = false

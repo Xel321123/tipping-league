@@ -1,0 +1,33 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Env: never commit real values. .env.example is the documented template.
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state (may contain linked project refs / credentials)
+supabase/.temp/
+supabase/.branches/
+.branches/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test / perf
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
