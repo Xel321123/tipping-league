@@ -92,6 +92,11 @@ Normalisation (`src/lib/svenskaSpel.ts`):
 | `result[type=9]` (Current) | `current_result`, live scores |
 | `event.cancelled` | `cancelled` / `match_status = cancelled` |
 
+**Three Topptipset pools share one draw-number series.** `topptipset` (25), `topptipsetextra`
+(24) and `topptipsetstryk` (23) each return different fixtures for the same draw number, so a
+round always stores product + draw. The admin selects the product; the round shows it and
+links to the matching spela.se result page.
+
 **Not available upstream: payouts.** The draw carries `currentNetSale`, `rowPrice` and
 `fund` (rollover), but no prize table — and `result/*` routes are gone. Topptipset has one
 variable prize group (8/8 rows, 70% of stakes). Winnings are therefore recorded per coupon

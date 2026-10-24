@@ -168,15 +168,28 @@ stakes) whose per-row amount is only published on the site. So the app stores on
 per coupon (`coupons.winnings`), aggregates it per team, per player and per era, and shows
 it in the table, the player cards and the admin payout panel.
 
-### About `topptipset`
+### The three Topptipset pools (product matters)
 
-Topptipset is the 8-match pool this league plays. Svenska Spel's API no longer serves the
-**collection** endpoint (`GET /draw/1/topptipset/draws` → *"No route found"*), but the
-per-draw document works fine: `GET /draw/1/topptipset/draws/4405`. A Topptipset round
-therefore always carries its draw number — copy it from the coupon header on
-[spela.svenskaspel.se/topptipset](https://spela.svenskaspel.se/topptipset). The create form
-defaults to Topptipset / 8 matches; Europatipset and Stryktipset (13 matches) can still
-resolve "latest draw" on their own.
+Topptipset is not one pool — Svenska Spel runs three 8-match pools that **share one draw
+number series**, so the number alone is ambiguous:
+
+| Product | API path | spela.se id | Example draw | What it was |
+| --- | --- | --- | --- | --- |
+| Topptipset | `topptipset` | 25 | 986 | AIK–Östersund (2018) |
+| Topptipset Stryk | `topptipsetstryk` | 23 | 986 | Chelsea–Tottenham (live) |
+| Topptipset Extra | `topptipsetextra` | 24 | 986 | Chelsea–Bournemouth |
+
+A round therefore stores **product + draw number**, and the admin form makes you pick the
+product (`Topptipset`, `Topptipset Stryk`, `Topptipset Extra`, plus Europatipset,
+Stryktipset and Måltipset). Each round shows its pool in the round list and on the live
+board, with a `on svenskaspel.se` link that resolves to the exact result page — e.g.
+`…/topptipset/resultat?draw=986&product=23`. If a round comes back with the wrong fixtures,
+the product is almost always the reason.
+
+Svenska Spel's API no longer serves the **collection** endpoint
+(`GET /draw/1/topptipset/draws` → *"No route found"*), so every Topptipset round carries a
+draw number. Europatipset and Stryktipset (13 matches) still resolve "latest draw" on their
+own. Saving a round with a draw number now pulls the fixtures immediately.
 
 ---
 

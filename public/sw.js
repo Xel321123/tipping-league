@@ -7,7 +7,7 @@
  *
  * Bump VERSION on a deploy that changes the shell behaviour.
  */
-const VERSION = 'v1'
+const VERSION = 'v2'
 const CACHE = `tipping-${VERSION}`
 const BASE = new URL('./', self.location.href).pathname
 const SHELL = [
@@ -54,7 +54,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         try {
-          const fresh = await fetch(request)
+          // Bypass the HTTP cache: GitHub Pages serves HTML with a short max-age,
+          // which would otherwise hand the service worker a stale shell after a deploy.
+          const fresh = await fetch(request, { cache: 'no-store' })
           if (fresh.ok) {
             const cache = await caches.open(CACHE)
             cache.put(`${BASE}index.html`, fresh.clone())

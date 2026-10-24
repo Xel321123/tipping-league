@@ -81,7 +81,15 @@ export function AdminRounds({ token }: { token: string }) {
       })
       setEditingId(id)
       rounds.refresh()
-      setMessage({ tone: 'ok', text: editingId ? 'Round updated.' : 'Round created — now sync the draw.' })
+
+      // A round without fixtures is useless, and the draw number is right there:
+      // pull the fixtures immediately when the product addresses a single draw.
+      if (draft.drawNumber) {
+        const synced = await sync(id)
+        if (synced) setMessage({ tone: 'ok', text: 'Round saved and fixtures synced.' })
+      } else {
+        setMessage({ tone: 'ok', text: editingId ? 'Round updated.' : 'Round created — now sync the draw.' })
+      }
     } catch (cause) {
       setMessage({ tone: 'error', text: cause instanceof Error ? cause.message : 'Could not save' })
     } finally {
@@ -106,10 +114,10 @@ export function AdminRounds({ token }: { token: string }) {
     }
   }
 
-  async function sync() {
-    if (!editingId) {
+  async function sync(targetId: string | null = editingId): Promise<boolean> {
+    if (!targetId) {
       setMessage({ tone: 'error', text: 'Save the round first, then sync the draw.' })
-      return
+      return false
     }
     setSyncing(true)
     setMessage(null)
@@ -121,9 +129,9 @@ export function AdminRounds({ token }: { token: string }) {
       }
 
       const resolvedDraw = payload.draw.drawNumber ?? drawNumber ?? null
-      await syncMatches(token, editingId, payload.normalized)
+      await syncMatches(token, targetId, payload.normalized)
       await saveRound(token, {
-        id: editingId,
+        id: targetId,
         title: draft.title,
         mode: draft.mode,
         product: draft.product,
@@ -144,11 +152,13 @@ export function AdminRounds({ token }: { token: string }) {
         tone: 'ok',
         text: `Synced ${payload.normalized.length} matches from ${payload.draw.productName ?? draft.product}${resolvedDraw ? ` #${resolvedDraw}` : ''}${payload.viaProxy ? ' (via proxy)' : ''}.`,
       })
+      return true
     } catch (cause) {
       setMessage({
         tone: 'error',
         text: cause instanceof Error ? cause.message : 'Could not sync the draw',
       })
+      return false
     } finally {
       setSyncing(false)
     }
@@ -286,7 +296,7 @@ export function AdminRounds({ token }: { token: string }) {
             <Button type="submit" loading={busy}>
               {editingId ? 'Save changes' : 'Create round'}
             </Button>
-            <Button variant="ghost" onClick={sync} loading={syncing} disabled={!editingId}>
+            <Button variant="ghost" onClick={() => void sync()} loading={syncing} disabled={!editingId}>
               Sync draw
             </Button>
             {editingId ? (
