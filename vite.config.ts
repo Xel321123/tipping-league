@@ -30,6 +30,10 @@ export default defineConfig(() => {
     build: {
       target: 'es2022',
       cssCodeSplit: true,
+      // ~150 kB gzip total: React 19 + react-router + supabase-js, with the admin
+      // console split into its own lazily loaded chunk. Raised so a vendor-only
+      // main chunk does not warn on every build.
+      chunkSizeWarningLimit: 600,
     },
   }
 })
