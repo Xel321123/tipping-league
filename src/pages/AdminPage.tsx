@@ -65,7 +65,7 @@ function PasscodePanel({ onClose }: { onClose: () => void }) {
   return (
     <Card className="p-4">
       <form className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={submit}>
-        <Field label="New passcode" hint="At least 8 characters.">
+        <Field label="New passcode">
           <TextInput
             type="password"
             autoComplete="new-password"
@@ -90,6 +90,9 @@ function PasscodePanel({ onClose }: { onClose: () => void }) {
           </Button>
         </div>
       </form>
+      <p className="mt-2 text-[11px] text-muted-2">
+        At least 8 characters. Saving signs out every other device.
+      </p>
       {message ? (
         <p
           className={
