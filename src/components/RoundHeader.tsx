@@ -31,9 +31,8 @@ export function RoundHeader({
   onRefresh?: () => void
   refreshing?: boolean
 }) {
-  const resolved = matches.filter(
-    (match) => !match.cancelled && (match.outcome !== null || match.current_result !== null),
-  ).length
+  // Only final outcomes count as decided: a live 0-0 must not read as 100%.
+  const resolved = matches.filter((match) => !match.cancelled && match.outcome !== null).length
   const progress = matches.length > 0 ? (100 * resolved) / matches.length : 0
   const siteUrl = productSiteUrl(round.svenska_spel_product, round.draw_number)
 
